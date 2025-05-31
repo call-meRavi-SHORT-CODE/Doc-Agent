@@ -1,0 +1,11 @@
+langchain-community       # for WebBaseLoader, FAISS wrapper
+langchain-core                 # for prompts, chains                   # BeautifulSoup parsing
+faiss-cpu                   # vector index backend
+openai
+langchain
+langgraph
+chromadb
+docker
+tqdm
+python-dotenv
+langchain_openai
