@@ -7,8 +7,13 @@ from app.services.llm import get_llm
 from app.services.rag_chain import build_rag_retrieval_chain
 from app.services.frameworks import get_agent
 import logging
+from langchain_community.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+from config import OPENAI_API_KEY
 
 router = APIRouter()
+
+
 
 @router.post("/ask", response_model=RAGResponse)
 def ask(request: RAGRequest):
@@ -27,6 +32,11 @@ def ask(request: RAGRequest):
         for step in agent.stream(inputs, stream_mode="values"):
             msg = step["messages"][-1]
             response_text += msg.content
+
+       
+        
+
+        #print(response_text)
 
         return RAGResponse(answer=response_text)
 

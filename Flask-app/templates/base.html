@@ -47,6 +47,7 @@
 
       <main class="content">
         <section class="playground-section">
+          <h1>Playground<h1>
           <div class="io-block">
             <h2 class="io-header">Input</h2>
             <textarea name="prompt_text" class="input-box" placeholder="Type your question here..." required>{{ prompt_text or '' }}</textarea>
@@ -56,7 +57,9 @@
           <div class="io-block">
             <h2 class="io-header">Response</h2>
             <div class="output-box">
-              {{ response or 'No response yet.' }}
+                <pre style="white-space: pre-wrap; font-weight: normal;">{{ response or 'No response yet.' }}</pre>
+
+             
             </div>
           </div>
         </section>

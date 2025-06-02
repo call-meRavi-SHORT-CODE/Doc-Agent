@@ -7,8 +7,10 @@ __pycache__/
 .DS_Store
 
 # FAISS index directory (if too large to commit)
-Agent/faiss_index/
+
 Rag-API/vector_data/chroma_index
+Rag-API/vector_data/faiss_index
+
 # Jupyter notebooks checkpoints
 .ipynb_checkpoints/
 

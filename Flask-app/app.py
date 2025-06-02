@@ -1,11 +1,17 @@
+# app.py (Flask)
+
 from flask import Flask, render_template, request
 import requests
 
+
+
+
 app = Flask(__name__)
 
-FRAMEWORKS = ['LangChain', 'CrewAI', 'LlamaIndex']
-MODELS = ['OpenAI', 'Anthropic', 'Cohere']
-VECTORSTORES = ['Chroma', 'Weaviate', 'Pinecone']
+# These lists should match the literals your FastAPI expects (case‐sensitive).
+FRAMEWORKS = ['LangGraph', 'AutoGen']
+MODELS     = ['OpenAI', 'Groq', 'Gemini']
+VECTORSTORES = ['Faiss', 'Chroma', 'Annoy']
 
 @app.route('/', methods=['GET'])
 def index():
@@ -23,27 +29,48 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    # 1) Read form selections
     selected_fw = request.form.get('framework')
-    selected_m = request.form.get('model')
+    selected_m  = request.form.get('model')
     selected_vs = request.form.get('vector_store')
     prompt_text = request.form.get('prompt_text', '').strip()
 
+    # 2) Build payload to match FastAPI's RAGRequest:
     payload = {
-        "framework": selected_fw,
-        "model": selected_m,
-        "vector_store": selected_vs,
-        "prompt": prompt_text
+        "framework": selected_fw.lower(),            # e.g. "langgraph"
+        "llm_model": selected_m.lower(),             # e.g. "openai"
+        "vector_store": selected_vs.lower(),         # e.g. "faiss"
+        "query": prompt_text                 # the user’s question
     }
 
     try:
-        # ✅ Corrected URL to match FastAPI
         api_resp = requests.post(
-            "http://localhost:8000/api/rag-query",
+            "http://localhost:8000/ask",   # <-- your FastAPI endpoint
             json=payload,
-            timeout=10
+            timeout=15
         )
         api_resp.raise_for_status()
+        # FastAPI returns {"answer": "..."}
         response = api_resp.json().get('answer', 'No answer field returned.')
+
+        #print(response)
+
+
+        if prompt_text and response.startswith(prompt_text):
+            response = response[len(prompt_text):].lstrip()
+
+        def clean_response(text: str) -> str:
+            start_index = text.find("Here")
+            if start_index == -1:
+                return text  # Return original if "Here" not found
+            return text[start_index:].strip()
+        
+        response = clean_response(response)
+
+        
+            
+
+
     except Exception as e:
         response = f"❌ Error calling RAG API: {e}"
 
