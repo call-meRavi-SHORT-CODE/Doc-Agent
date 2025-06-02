@@ -7,5 +7,7 @@ langgraph
 chromadb
 docker
 tqdm
-python-dotenv
 langchain_openai
+fastapi
+uvicorn
+python-dotenv

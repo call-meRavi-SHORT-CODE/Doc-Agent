@@ -1,0 +1,88 @@
+/* Reset & base */
+* { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', sans-serif; }
+body { background:#f4f5f7; color:#333; }
+
+/* Topbar */
+.topbar { background:#000000; color:#fff; padding:1rem; }
+.topbar h1 { font-size:1.5rem; }
+
+/* Layout */
+.container { display:grid; grid-template-columns:240px 1fr; height:calc(100vh - 64px); }
+.sidebar { background:#fff; padding:1rem; border-right:1px solid #e2e8f0; }
+.content { padding:1rem; overflow:auto; }
+
+/* Config form */
+.config-form h2 { margin-bottom:0.5rem; font-size:1.1rem; }
+.config-form label { display:block; margin-bottom:0.8rem; font-size:0.9rem; }
+.config-form select { width:100%; padding:0.4rem; border:1px solid #cbd5e1; border-radius:4px; }
+.btn-evaluate {
+  width:100%; padding:0.6rem;
+  background: linear-gradient(90deg,#000000,#312f30);
+  border:none; color:#fff; font-weight:600; border-radius:4px;
+  cursor:pointer; transition:opacity .2s;
+}
+.btn-evaluate:hover { opacity:.9; }
+
+/* Tabs */
+.tabs { display:flex; border-bottom:1px solid #cbd5e1; margin-bottom:1rem; }
+.tab {
+  padding:.6rem 1rem; cursor:pointer; text-decoration:none; color:#4b5563; border-bottom:2px solid transparent;
+  transition:color .2s,border-color .2s;
+}
+.tab.active {
+  color:#111827; border-color:#6366f1;
+}
+.tab:not(.active):hover { color:#111827; }
+
+/* Log table */
+.log-table { display:grid; grid-auto-rows:min-content; }
+.row { display:grid; grid-template-columns:180px 1fr 1fr 60px 60px 80px; padding:.5rem; align-items:center; }
+.row.header { background:#e2e8f0; font-weight:600; }
+.row + .row { border-top:1px solid #e2e8f0; }
+
+/* Status coloring */
+.status-success { background:#f0fdf4; }
+.status-error   { background:#fef2f2; }
+
+/* Hover highlight */
+.row:hover { background:#d1d5db; }
+
+
+/* Playground input/output */
+.playground-section { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.io-block {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.io-header {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.input-box {
+  width: 100%;
+  height: 150px;
+  resize: vertical;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.output-box {
+  min-height: 150px;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+}

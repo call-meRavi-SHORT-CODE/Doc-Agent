@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Docker Agent</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>Docker Agent</h1>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="tabs">
+    <a href="{{ url_for('index') }}" class="tab {% if request.endpoint=='playground' %}active{% endif %}">Playground</a>
+    <a href="{{ url_for('logs') }}" class="tab {% if request.endpoint=='logs' %}active{% endif %}">Logs</a>
+    <a href="{{ url_for('metrics') }}" class="tab {% if request.endpoint=='metrics' %}active{% endif %}">Metrics</a>
+  </nav>
+
+  <form method="post" action="/generate">
+    <div class="container">
+      <aside class="sidebar config-form">
+        <h2>Configuration</h2>
+        <label>Framework
+          <select name="framework">
+            {% for fw in frameworks %}
+              <option value="{{ fw }}" {% if fw == selected_fw %}selected{% endif %}>{{ fw }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Model
+          <select name="model">
+            {% for m in models %}
+              <option value="{{ m }}" {% if m == selected_m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Vector Store
+          <select name="vector_store">
+            {% for vs in vectorstores %}
+              <option value="{{ vs }}" {% if vs == selected_vs %}selected{% endif %}>{{ vs }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </aside>
+
+      <main class="content">
+        <section class="playground-section">
+          <div class="io-block">
+            <h2 class="io-header">Input</h2>
+            <textarea name="prompt_text" class="input-box" placeholder="Type your question here..." required>{{ prompt_text or '' }}</textarea>
+            <button type="submit" class="btn-evaluate">Submit</button>
+          </div>
+
+          <div class="io-block">
+            <h2 class="io-header">Response</h2>
+            <div class="output-box">
+              {{ response or 'No response yet.' }}
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </form>
+</body>
+</html>
