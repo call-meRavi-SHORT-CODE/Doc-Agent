@@ -37,7 +37,7 @@ def get_agent(framework_name: str, llm, rag_chain):
 
     elif framework_name == "autogen":
         # Placeholder for an AutoGen‐based agent
-        raise NotImplementedError("AutoGen framework not implemented yet")
+        raise       ("AutoGen framework not implemented yet")
 
     else:
         raise ValueError(f"Unsupported framework: {framework_name}")

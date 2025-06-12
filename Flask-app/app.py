@@ -8,15 +8,14 @@ import requests
 
 app = Flask(__name__)
 
-# These lists should match the literals your FastAPI expects (case‐sensitive).
 FRAMEWORKS = ['LangGraph', 'AutoGen']
-MODELS     = ['OpenAI', 'Groq', 'Gemini']
+MODELS     = ['gpt-4o','gpt-4o-mini',"gpt-4.1", "gpt-4.1-mini", "gpt-3.5-turbo", 'llama3-8b-8192','llama3-70b-8192',"llama-3.3-70b-versatile"]  
 VECTORSTORES = ['Faiss', 'Chroma', 'Annoy']
 
 @app.route('/', methods=['GET'])
 def index():
     return render_template(
-        'base.html',
+        'base.html', 
         frameworks=FRAMEWORKS,
         models=MODELS,
         vectorstores=VECTORSTORES,
@@ -47,7 +46,7 @@ def generate():
         api_resp = requests.post(
             "http://localhost:8000/ask",   # <-- your FastAPI endpoint
             json=payload,
-            timeout=15
+            timeout=30
         )
         api_resp.raise_for_status()
         # FastAPI returns {"answer": "..."}

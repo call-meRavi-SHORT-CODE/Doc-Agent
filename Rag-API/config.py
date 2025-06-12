@@ -4,8 +4,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-DATA_DIR = 'Rag-API\data'
+
+# API keys
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("Set OPENAI_API_KEY in your .env file")
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("Set GROQ_API_KEY in your environment or .env file")
+
+DATA_DIR = 'Rag-API\data'
 FAISS_INDEX_DIR = "vector_data/faiss_index"
 CHROMA_INDEX_DIR = "vector_data/chroma_index"
 
