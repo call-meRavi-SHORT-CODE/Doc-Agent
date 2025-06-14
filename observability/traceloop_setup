@@ -1,0 +1,242 @@
+# observability/traceloop_setup.py
+import os
+import logging
+from typing import Dict, Any, Optional
+from datetime import datetime
+from traceloop.sdk import Traceloop
+from traceloop.sdk.decorators import workflow, task
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.instrumentation.urllib3 import URLLib3Instrumentor
+
+logger = logging.getLogger(__name__)
+
+class ObservabilityManager:
+    """Manages observability setup and tracing"""
+    
+    def __init__(self, config):
+        self.config = config
+        self.tracer = None
+        self.is_initialized = False
+        
+    def initialize(self):
+        """Initialize Traceloop and OpenTelemetry"""
+        if self.is_initialized:
+            return
+            
+        try:
+            # Initialize Traceloop
+            Traceloop.init(
+                app_name=self.config.observability.service_name,
+                api_endpoint=self.config.observability.grafana_tempo_endpoint,
+                disable_batch=False
+            )
+            
+            # Set up OpenTelemetry
+            self._setup_opentelemetry()
+            
+            # Auto-instrument popular libraries
+            RequestsInstrumentor().instrument()
+            URLLib3Instrumentor().instrument()
+            
+            self.tracer = trace.get_tracer(__name__)
+            self.is_initialized = True
+            
+            logger.info("Observability initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize observability: {e}")
+            self.is_initialized = False
+    
+    def _setup_opentelemetry(self):
+        """Setup OpenTelemetry with Tempo exporter"""
+        # Create OTLP exporter for Grafana Tempo
+        otlp_exporter = OTLPSpanExporter(
+            endpoint=f"{self.config.observability.grafana_tempo_endpoint}/v1/traces",
+            insecure=True
+        )
+        
+        # Set up trace provider
+        trace.set_tracer_provider(TracerProvider())
+        tracer_provider = trace.get_tracer_provider()
+        
+        # Add span processor
+        span_processor = BatchSpanProcessor(otlp_exporter)
+        tracer_provider.add_span_processor(span_processor)
+
+class RAGObservability:
+    """Observability decorators and utilities for RAG operations"""
+    
+    def __init__(self, observability_manager: ObservabilityManager):
+        self.obs_manager = observability_manager
+        self.metrics = {
+            "queries_total": 0,
+            "queries_successful": 0,
+            "queries_failed": 0,
+            "avg_response_time": 0,
+            "framework_usage": {},
+            "llm_usage": {},
+            "vector_store_usage": {}
+        }
+    
+    @workflow("rag_query_processing")
+    def trace_rag_query(self, func):
+        """Decorator to trace RAG query processing"""
+        def wrapper(*args, **kwargs):
+            if not self.obs_manager.is_initialized:
+                return func(*args, **kwargs)
+                
+            with self.obs_manager.tracer.start_as_current_span("rag_query") as span:
+                start_time = datetime.now()
+                
+                try:
+                    # Extract query information
+                    query = kwargs.get('query') or (args[0] if args else "unknown")
+                    span.set_attribute("query.text", str(query)[:100])  # Truncate long queries
+                    span.set_attribute("query.timestamp", start_time.isoformat())
+                    
+                    # Execute function
+                    result = func(*args, **kwargs)
+                    
+                    # Record success metrics
+                    end_time = datetime.now()
+                    response_time = (end_time - start_time).total_seconds()
+                    
+                    span.set_attribute("query.success", True)
+                    span.set_attribute("query.response_time", response_time)
+                    span.set_attribute("query.result_length", len(str(result)))
+                    
+                    self._update_metrics("success", response_time)
+                    
+                    return result
+                    
+                except Exception as e:
+                    span.set_attribute("query.success", False)
+                    span.set_attribute("query.error", str(e))
+                    self._update_metrics("failure")
+                    raise
+                    
+        return wrapper
+    
+    @task("vector_search")
+    def trace_vector_search(self, vector_store_type: str):
+        """Decorator to trace vector search operations"""
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                if not self.obs_manager.is_initialized:
+                    return func(*args, **kwargs)
+                    
+                with self.obs_manager.tracer.start_as_current_span("vector_search") as span:
+                    span.set_attribute("vector_store.type", vector_store_type)
+                    span.set_attribute("vector_store.query", str(kwargs.get('query', 'unknown'))[:100])
+                    
+                    start_time = datetime.now()
+                    
+                    try:
+                        result = func(*args, **kwargs)
+                        
+                        end_time = datetime.now()
+                        search_time = (end_time - start_time).total_seconds()
+                        
+                        span.set_attribute("vector_search.success", True)
+                        span.set_attribute("vector_search.time", search_time)
+                        span.set_attribute("vector_search.results_count", len(result) if hasattr(result, '__len__') else 1)
+                        
+                        self._update_vector_store_metrics(vector_store_type)
+                        
+                        return result
+                        
+                    except Exception as e:
+                        span.set_attribute("vector_search.success", False)
+                        span.set_attribute("vector_search.error", str(e))
+                        raise
+                        
+            return wrapper
+        return decorator
+    
+    @task("llm_generation")
+    def trace_llm_generation(self, llm_provider: str, model_name: str):
+        """Decorator to trace LLM generation"""
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                if not self.obs_manager.is_initialized:
+                    return func(*args, **kwargs)
+                    
+                with self.obs_manager.tracer.start_as_current_span("llm_generation") as span:
+                    span.set_attribute("llm.provider", llm_provider)
+                    span.set_attribute("llm.model", model_name)
+                    
+                    # Extract prompt information
+                    prompt = str(kwargs.get('prompt') or args[0] if args else 'unknown')
+                    span.set_attribute("llm.prompt_length", len(prompt))
+                    span.set_attribute("llm.prompt_preview", prompt[:200])
+                    
+                    start_time = datetime.now()
+                    
+                    try:
+                        result = func(*args, **kwargs)
+                        
+                        end_time = datetime.now()
+                        generation_time = (end_time - start_time).total_seconds()
+                        
+                        response_text = str(result)
+                        span.set_attribute("llm.success", True)
+                        span.set_attribute("llm.generation_time", generation_time)
+                        span.set_attribute("llm.response_length", len(response_text))
+                        span.set_attribute("llm.response_preview", response_text[:200])
+                        
+                        self._update_llm_metrics(llm_provider)
+                        
+                        return result
+                        
+                    except Exception as e:
+                        span.set_attribute("llm.success", False)
+                        span.set_attribute("llm.error", str(e))
+                        raise
+                        
+            return wrapper
+        return decorator
+    
+    def _update_metrics(self, status: str, response_time: float = 0):
+        """Update internal metrics"""
+        self.metrics["queries_total"] += 1
+        
+        if status == "success":
+            self.metrics["queries_successful"] += 1
+            # Update average response time
+            current_avg = self.metrics["avg_response_time"]
+            total_successful = self.metrics["queries_successful"]
+            self.metrics["avg_response_time"] = (current_avg * (total_successful - 1) + response_time) / total_successful
+        else:
+            self.metrics["queries_failed"] += 1
+    
+    def _update_framework_metrics(self, framework: str):
+        """Update framework usage metrics"""
+        self.metrics["framework_usage"][framework] = self.metrics["framework_usage"].get(framework, 0) + 1
+    
+    def _update_llm_metrics(self, llm_provider: str):
+        """Update LLM usage metrics"""
+        self.metrics["llm_usage"][llm_provider] = self.metrics["llm_usage"].get(llm_provider, 0) + 1
+    
+    def _update_vector_store_metrics(self, vector_store: str):
+        """Update vector store usage metrics"""
+        self.metrics["vector_store_usage"][vector_store] = self.metrics["vector_store_usage"].get(vector_store, 0) + 1
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get current metrics"""
+        return self.metrics.copy()
+    
+    def reset_metrics(self):
+        """Reset all metrics"""
+        self.metrics = {
+            "queries_total": 0,
+            "queries_successful": 0,
+            "queries_failed": 0,
+            "avg_response_time": 0,
+            "framework_usage": {},
+            "llm_usage": {},
+            "vector_store_usage": {}
+        }
