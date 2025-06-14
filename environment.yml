@@ -1,0 +1,72 @@
+name: rag-observability
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - scipy
+  - requests
+  - python-dotenv
+  - jupyterlab
+  - ipywidgets
+  - matplotlib
+  - scikit-learn
+  - sentencepiece
+  - pyarrow
+  - faiss-cpu
+  - chromadb
+  - pip:
+      # LLMs
+      - openai
+      - google-generativeai
+      - groq
+      # Frameworks
+      - langchain
+      - langchain-core
+      - langchain-openai
+      - langchain-chroma
+      - langchain-community
+      - llama-index
+      - pyautogen
+      - crewai
+      - neo4j
+      - boto3
+      - graphlit-sdk
+      # Vector DBs
+      - chromadb
+      - pymilvus
+      - qdrant-client
+      - weaviate-client
+      - sentence-transformers
+      # Observability
+      - traceloop-sdk
+      - opentelemetry-api
+      - opentelemetry-sdk
+      - opentelemetry-exporter-otlp
+      - opentelemetry-instrumentation-requests
+      - opentelemetry-instrumentation-urllib3
+      # Web/API
+      - fastapi
+      - uvicorn
+      - flask
+      # Tools and Utilities
+      - docker
+      - python-on-whales
+      - pyyaml
+      - tqdm
+      - rich
+      - beautifulsoup4
+      - feedparser
+      # Testing
+      - pytest
+      - httpx
+      # Optional: Visualization
+      - plotly
+      - gradio
+      # Optional: For agent tools
+      - duckduckgo-search
+      # Optional: For prompt templates
+      - jinja2
