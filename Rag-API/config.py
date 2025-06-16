@@ -14,6 +14,11 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
     raise ValueError("Set GROQ_API_KEY in your environment or .env file")
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("Set GEMINI_API_KEY in your environment or .env file")
+
+
 DATA_DIR = 'Rag-API\data'
 FAISS_INDEX_DIR = "vector_data/faiss_index"
 CHROMA_INDEX_DIR = "vector_data/chroma_index"

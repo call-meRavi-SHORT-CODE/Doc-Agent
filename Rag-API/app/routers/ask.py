@@ -10,6 +10,7 @@ import logging
 from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
 from config import OPENAI_API_KEY
+import asyncio
 
 router = APIRouter()
 
@@ -26,19 +27,35 @@ def ask(request: RAGRequest):
         # 2) Create agent
         agent = get_agent(request.framework, llm, rag_chain)
 
-        # 3) Run the agent in “stream” mode
-        inputs = {"messages": [("user", request.query)]}
-        response_text = ""
-        for step in agent.stream(inputs, stream_mode="values"):
-            msg = step["messages"][-1]
-            response_text += msg.content
+        if request.framework == "langgraph":
+            # 3) Run the agent in “stream” mode
+            inputs = {"messages": [("user", request.query)]}
+            response_text = ""
+            for step in agent.stream(inputs, stream_mode="values"):
+                msg = step["messages"][-1]
+                response_text += msg.content
+
+            return RAGResponse(answer=response_text)
+
+        else:
+
+            async def main():
+                response_text = await agent.run(user_msg=request.query)
+                return response_text
+            
+            response_text = asyncio.run(main())
+
+            return RAGResponse(answer=str(response_text))
+
+
 
        
         
 
         #print(response_text)
+        #return RAGResponse(answer=response_text)
 
-        return RAGResponse(answer=response_text)
+        
 
     except Exception as e:
         # Log the full traceback so you see exactly where it blew up

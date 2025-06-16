@@ -25,8 +25,9 @@ def get_llm(model_name: str):
         return ChatGroq(model="llama-3.3-70b-versatile",temperature=0.5)
 
 
-    elif model_name == "gemini":
+    elif model_name == "gemini-2.0-flash":
         # Replace "gemini-llm-name" with actual Gemini identifier
-        return init_chat_model("gemini-llm-name", model_provider="google")
+        model = init_chat_model("gemini-2.0-flash", model_provider="google_genai")
+
     else:
         raise ValueError(f"Unsupported LLM model: {model_name}")

@@ -8,12 +8,12 @@ chromadb
 docker
 tqdm
 langchain_openai
-langchain[groq]
 fastapi
 uvicorn
 python-dotenv
 opentelemetry-api
 opentelemetry-sdk
+langchain-google-genai
 
 
 opentelemetry-api 
