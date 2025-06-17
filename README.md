@@ -97,7 +97,7 @@ This README provides instructions for setup, local development, Dockerization, c
 
    * The Flask service will start (default on `http://127.0.0.1:5000`).
   
-![Inputs](flask-app.png)
+![Inputs](Flask-app.png)
 
 7. **Open in Browser**:
    Navigate to `http://localhost:5000` (or the configured host/port) to access the frontend or test endpoints.
