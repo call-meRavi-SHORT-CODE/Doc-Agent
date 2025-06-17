@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models import RAGRequest, RAGResponse
 from app.services.vector_store import get_vector_store
-from app.services.llm import get_llm
+from app.services.llm import get_llm,get_llama_index_llm
 from app.services.rag_chain import build_rag_retrieval_chain
 from app.services.frameworks import get_agent
 import logging
@@ -15,13 +15,18 @@ import asyncio
 router = APIRouter()
 
 
-
 @router.post("/ask", response_model=RAGResponse)
 def ask(request: RAGRequest):
     try:
         # 1) Initialize™
         vector_store = get_vector_store(request.vector_store)
-        llm = get_llm(request.llm_model)
+        if request.framework == "langgraph":
+            llm = get_llm(request.llm_model)
+        elif request.framework =="llamaindex":
+            llm = get_llama_index_llm(request.llm_model)
+
+        else:
+            return True
         rag_chain = build_rag_retrieval_chain(llm, vector_store)
 
         # 2) Create agent
@@ -37,7 +42,7 @@ def ask(request: RAGRequest):
 
             return RAGResponse(answer=response_text)
 
-        else:
+        elif request.framework == "llamaindex":
 
             async def main():
                 response_text = await agent.run(user_msg=request.query)
@@ -46,6 +51,17 @@ def ask(request: RAGRequest):
             response_text = asyncio.run(main())
 
             return RAGResponse(answer=str(response_text))
+
+        elif request.framework == "dspy":
+
+            pred = agent(question=request.query)
+            response_text = pred.answer
+
+
+            return RAGResponse(answer=str(response_text))
+        
+        else:
+            return True
 
 
 

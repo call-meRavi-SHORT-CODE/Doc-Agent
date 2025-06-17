@@ -4,7 +4,10 @@ import logging
 from app.services.vector_store import get_vector_store
 from app.services.llm import get_llm
 from app.services.rag_chain import build_rag_retrieval_chain
+import dspy
+import os 
 
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 app = FastAPI(
     title="Configurable RAG Agent API",
     version="1.0.0"
@@ -13,8 +16,15 @@ app = FastAPI(
 # Mount the /ask router
 app.include_router(ask_router, prefix="", tags=["RAG"])
 
+
+
 @app.on_event("startup")
 async def preload_indexes_and_chains():
+
+    lm = dspy.LM('openai/gpt-4o-mini')
+
+
+    dspy.configure(lm=lm)
     """
     This runs once when FastAPI starts. We’ll force building/loading the 
     FAISS and Chroma indexes here, so subsequent /ask calls are fast.
