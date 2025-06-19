@@ -20,6 +20,13 @@ def ask(request: RAGRequest):
     try:
         # 1) Initialize™
         vector_store = get_vector_store(request.vector_store)
+
+        llm = get_llm(request.llm_model)
+        
+        rag_chain = build_rag_retrieval_chain(llm, vector_store)
+
+        # 2) Create agent
+
         if request.framework == "langgraph":
             llm = get_llm(request.llm_model)
         elif request.framework =="llamaindex":
@@ -27,9 +34,8 @@ def ask(request: RAGRequest):
 
         else:
             return True
-        rag_chain = build_rag_retrieval_chain(llm, vector_store)
-
-        # 2) Create agent
+        
+        
         agent = get_agent(request.framework, llm, rag_chain)
 
         if request.framework == "langgraph":

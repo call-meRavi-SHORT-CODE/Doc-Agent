@@ -12,10 +12,12 @@ if not OPENAI_API_KEY:
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 if not GROQ_API_KEY:
-    raise ValueError("Set GROQ_API_KEY in your environment or .env file")
+    raise ValueError("Set GROQ_API_KEY in your .env file")
+# Optionally strip whitespace/newlines:
+GROQ_API_KEY = GROQ_API_KEY.strip()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if not GOOGLE_API_KEY:
     raise ValueError("Set GEMINI_API_KEY in your environment or .env file")
 
 
