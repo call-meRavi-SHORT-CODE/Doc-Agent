@@ -23,3 +23,19 @@ torch==2.3.0
 transformers==4.41.1           
 langchain-google-genai 
 google-generativeai
+# Tracing and Monitoring
+langtrace-python-sdk
+prometheus-client
+structlog
+opentelemetry-exporter-prometheus
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-requests
+opentelemetry-instrumentation-langchain
+grafana-client
+# Additional utilities
+pydantic-settings
+redis
+celery
+sqlalchemy
+alembic
+psycopg2-binary

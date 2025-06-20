@@ -2,69 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Docker Agent</title>
+  <title>{% block title %}Docker Agent{% endblock %}</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
   <header class="topbar">
-    <h1>Docker Agent</h1>
+    <div class="topbar-content">
+      <h1><i class="fas fa-robot"></i> Docker Agent</h1>
+      <div class="topbar-info">
+        <span class="status-indicator" id="status-indicator">
+          <i class="fas fa-circle"></i> Online
+        </span>
+      </div>
+    </div>
   </header>
 
-  <!-- Tabs -->
+  <!-- Navigation Tabs -->
   <nav class="tabs">
-    <a href="{{ url_for('index') }}" class="tab {% if request.endpoint=='playground' %}active{% endif %}">Playground</a>
-    <a href="{{ url_for('logs') }}" class="tab {% if request.endpoint=='logs' %}active{% endif %}">Logs</a>
-    <a href="{{ url_for('metrics') }}" class="tab {% if request.endpoint=='metrics' %}active{% endif %}">Metrics</a>
+    <a href="{{ url_for('web.index') }}" class="tab {% if request.endpoint == 'web.index' %}active{% endif %}">
+      <i class="fas fa-play"></i> Playground
+    </a>
+    <a href="{{ url_for('web.traces') }}" class="tab {% if request.endpoint in ['web.traces', 'web.trace_detail'] %}active{% endif %}">
+      <i class="fas fa-route"></i> Traces
+    </a>
+    <a href="{{ url_for('web.logs') }}" class="tab {% if request.endpoint == 'web.logs' %}active{% endif %}">
+      <i class="fas fa-file-alt"></i> Logs
+    </a>
+    <a href="{{ url_for('web.metrics') }}" class="tab {% if request.endpoint == 'web.metrics' %}active{% endif %}">
+      <i class="fas fa-chart-line"></i> Metrics
+    </a>
+    <a href="http://localhost:8001/metrics" target="_blank" class="tab external">
+      <i class="fas fa-external-link-alt"></i> Prometheus
+    </a>
   </nav>
 
-  <form method="post" action="/generate">
-    <div class="container">
-      <aside class="sidebar config-form">
-        <h2>Configuration</h2>
-        <label>Framework
-          <select name="framework">
-            {% for fw in frameworks %}
-              <option value="{{ fw }}" {% if fw == selected_fw %}selected{% endif %}>{{ fw }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>Model
-          <select name="model">
-            {% for m in models %}
-              <option value="{{ m }}" {% if m == selected_m %}selected{% endif %}>{{ m }}</option>
-            {% endfor %}
-          </select>
-        </label>
-        <label>Vector Store
-          <select name="vector_store">
-            {% for vs in vectorstores %}
-              <option value="{{ vs }}" {% if vs == selected_vs %}selected{% endif %}>{{ vs }}</option>
-            {% endfor %}
-          </select>
-        </label>
-      </aside>
-
-      <main class="content">
-        <section class="playground-section">
-          <h1>Playground<h1>
-          <div class="io-block">
-            <h2 class="io-header">Input</h2>
-            <textarea name="prompt_text" class="input-box" placeholder="Type your question here..." required>{{ prompt_text or '' }}</textarea>
-            <button type="submit" class="btn-evaluate">Submit</button>
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash-message flash-{{ category }}">
+            <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+            <button class="flash-close" onclick="this.parentElement.remove()">×</button>
           </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-          <div class="io-block">
-            <h2 class="io-header">Response</h2>
-            <div class="output-box">
-                <pre style="white-space: pre-wrap; font-weight: normal;">{{ response or 'No response yet.' }}</pre>
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
 
-             
-            </div>
-          </div>
-        </section>
-      </main>
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; 2025 Docker Agent. Built with Flask, LangTrace, and Prometheus.</p>
+      <div class="footer-links">
+        <a href="/api/health" target="_blank">API Health</a>
+        <a href="/health" target="_blank">App Health</a>
+      </div>
     </div>
-  </form>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>
