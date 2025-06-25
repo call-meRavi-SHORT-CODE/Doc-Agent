@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Metrics - Docker Agent{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="metrics-container">
+  <div class="metrics-header">
+    <h1><i class="fas fa-chart-line"></i> Performance Metrics</h1>
+    <div class="metrics-actions">
+      <button class="btn-secondary" onclick="refreshMetrics()">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+      <a href="http://localhost:8001/metrics" target="_blank" class="btn-secondary">
+        <i class="fas fa-external-link-alt"></i> Prometheus
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <h2><i class="fas fa-tachometer-alt"></i> Summary</h2>
+      </div>
+      <div class="metric-content">
+        <div class="summary-stats">
+          <div class="stat-item">
+            <div class="stat-value" id="total-requests">{{ metrics.total_requests }}</div>
+            <div class="stat-label">Total Requests</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="success-rate">{{ "%.1f"|format(metrics.success_rate) }}%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="avg-duration">{{ "%.2f"|format(metrics.average_duration) }}s</div>
+            <div class="stat-label">Avg Duration</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="total-tokens">{{ metrics.total_tokens_used }}</div>
+            <div class="stat-label">Total Tokens</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <h2><i class="fas fa-spinner"></i> Active Requests</h2>
+      </div>
+      <div class="metric-content">
+        <div class="stat-item">
+          <div class="stat-value" id="active-requests" style="color: #f59e0b; font-size: 2.5rem;">{{ metrics.active_requests }}</div>
+          <div class="stat-label">Currently Processing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Token Usage Analysis -->
+  <div class="token-usage-grid">
+    <div class="token-card">
+      <h3>Input Tokens</h3>
+      <div class="token-value" id="input-tokens">0</div>
+      <div class="token-cost" id="input-cost">$0.00</div>
+    </div>
+    <div class="token-card">
+      <h3>Output Tokens</h3>
+      <div class="token-value" id="output-tokens">0</div>
+      <div class="token-cost" id="output-cost">$0.00</div>
+    </div>
+    <div class="token-card">
+      <h3>Total Tokens</h3>
+      <div class="token-value" id="total-token-usage">{{ metrics.total_tokens_used }}</div>
+      <div class="token-cost" id="total-cost">$0.00</div>
+    </div>
+  </div>
+
+  <!-- Token Usage Over Time Chart -->
+  <div class="metric-card">
+    <div class="metric-header">
+      <h2><i class="fas fa-chart-area"></i> Token Usage Over Time</h2>
+    </div>
+    <div class="time-range-selector">
+      <button class="time-range-btn active" data-range="7">7 Days</button>
+      <button class="time-range-btn" data-range="30">30 Days</button>
+      <button class="time-range-btn" data-range="90">90 Days</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="tokenChart" class="chart-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Cost Analysis Chart -->
+  <div class="cost-analysis">
+    <div class="metric-header">
+      <h2><i class="fas fa-dollar-sign"></i> Cost Analysis</h2>
+    </div>
+    <div class="time-range-selector">
+      <button class="time-range-btn active" data-range="7" data-chart="cost">7 Days</button>
+      <button class="time-range-btn" data-range="30" data-chart="cost">30 Days</button>
+      <button class="time-range-btn" data-range="90" data-chart="cost">90 Days</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="costChart" class="chart-canvas"></canvas>
+    </div>
+    <div class="cost-breakdown">
+      <div class="cost-item">
+        <div class="cost-amount" id="input-cost-total">$0.00</div>
+        <div class="cost-label">Input Cost</div>
+      </div>
+      <div class="cost-item">
+        <div class="cost-amount" id="output-cost-total">$0.00</div>
+        <div class="cost-label">Output Cost</div>
+      </div>
+      <div class="cost-item">
+        <div class="cost-amount" id="total-cost-amount">$0.00</div>
+        <div class="cost-label">Total Cost</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Average Latency Chart -->
+  <div class="latency-chart">
+    <div class="metric-header">
+      <h2><i class="fas fa-clock"></i> Average Latency</h2>
+    </div>
+    <div class="time-range-selector">
+      <button class="time-range-btn active" data-range="7" data-chart="latency">7 Days</button>
+      <button class="time-range-btn" data-range="30" data-chart="latency">30 Days</button>
+      <button class="time-range-btn" data-range="90" data-chart="latency">90 Days</button>
+    </div>
+    <div class="chart-container">
+      <canvas id="latencyChart" class="chart-canvas"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let tokenChart, costChart, latencyChart;
+
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+  initializeCharts();
+  loadMetricsData();
+  setupTimeRangeButtons();
+});
+
+function initializeCharts() {
+  // Token Usage Chart
+  const tokenCtx = document.getElementById('tokenChart').getContext('2d');
+  tokenChart = new Chart(tokenCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Input Tokens',
+          data: [],
+          borderColor: '#6366f1',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'Output Tokens',
+          data: [],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4
+        },
+        {
+          label: 'Total Tokens',
+          data: [],
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Tokens'
+          }
+        }
+      }
+    }
+  });
+
+  // Cost Chart
+  const costCtx = document.getElementById('costChart').getContext('2d');
+  costChart = new Chart(costCtx, {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: 'Input Cost',
+          data: [],
+          backgroundColor: 'rgba(99, 102, 241, 0.8)',
+        },
+        {
+          label: 'Output Cost',
+          data: [],
+          backgroundColor: 'rgba(16, 185, 129, 0.8)',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Cost ($)'
+          }
+        }
+      }
+    }
+  });
+
+  // Latency Chart
+  const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+  latencyChart = new Chart(latencyCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Average Latency (ms)',
+        data: [],
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Latency (ms)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function loadMetricsData(timeRange = 7) {
+  // Generate sample data for demonstration
+  const days = timeRange;
+  const labels = [];
+  const inputTokens = [];
+  const outputTokens = [];
+  const totalTokens = [];
+  const inputCosts = [];
+  const outputCosts = [];
+  const latencies = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    labels.push(date.toLocaleDateString());
+    
+    // Generate realistic sample data
+    const inputToken = Math.floor(Math.random() * 5000) + 1000;
+    const outputToken = Math.floor(Math.random() * 3000) + 500;
+    const totalToken = inputToken + outputToken;
+    
+    inputTokens.push(inputToken);
+    outputTokens.push(outputToken);
+    totalTokens.push(totalToken);
+    
+    // Calculate costs (example rates: $0.01 per 1K input tokens, $0.03 per 1K output tokens)
+    inputCosts.push((inputToken / 1000) * 0.01);
+    outputCosts.push((outputToken / 1000) * 0.03);
+    
+    // Generate latency data (100-2000ms)
+    latencies.push(Math.floor(Math.random() * 1900) + 100);
+  }
+
+  // Update token chart
+  tokenChart.data.labels = labels;
+  tokenChart.data.datasets[0].data = inputTokens;
+  tokenChart.data.datasets[1].data = outputTokens;
+  tokenChart.data.datasets[2].data = totalTokens;
+  tokenChart.update();
+
+  // Update cost chart
+  costChart.data.labels = labels;
+  costChart.data.datasets[0].data = inputCosts;
+  costChart.data.datasets[1].data = outputCosts;
+  costChart.update();
+
+  // Update latency chart
+  latencyChart.data.labels = labels;
+  latencyChart.data.datasets[0].data = latencies;
+  latencyChart.update();
+
+  // Update summary cards
+  const totalInputTokens = inputTokens.reduce((a, b) => a + b, 0);
+  const totalOutputTokens = outputTokens.reduce((a, b) => a + b, 0);
+  const totalInputCost = inputCosts.reduce((a, b) => a + b, 0);
+  const totalOutputCost = outputCosts.reduce((a, b) => a + b, 0);
+
+  document.getElementById('input-tokens').textContent = totalInputTokens.toLocaleString();
+  document.getElementById('output-tokens').textContent = totalOutputTokens.toLocaleString();
+  document.getElementById('total-token-usage').textContent = (totalInputTokens + totalOutputTokens).toLocaleString();
+  
+  document.getElementById('input-cost').textContent = `$${totalInputCost.toFixed(3)}`;
+  document.getElementById('output-cost').textContent = `$${totalOutputCost.toFixed(3)}`;
+  document.getElementById('total-cost').textContent = `$${(totalInputCost + totalOutputCost).toFixed(3)}`;
+  
+  document.getElementById('input-cost-total').textContent = `$${totalInputCost.toFixed(2)}`;
+  document.getElementById('output-cost-total').textContent = `$${totalOutputCost.toFixed(2)}`;
+  document.getElementById('total-cost-amount').textContent = `$${(totalInputCost + totalOutputCost).toFixed(2)}`;
+}
+
+function setupTimeRangeButtons() {
+  document.querySelectorAll('.time-range-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const range = parseInt(this.dataset.range);
+      const chartType = this.dataset.chart;
+      
+      // Update active state for buttons in the same group
+      const parent = this.parentElement;
+      parent.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Load data for the selected time range
+      loadMetricsData(range);
+    });
+  });
+}
+
+function refreshMetrics() {
+  const activeBtn = document.querySelector('.time-range-btn.active');
+  const range = activeBtn ? parseInt(activeBtn.dataset.range) : 7;
+  loadMetricsData(range);
+  
+  // Also refresh the summary metrics
+  fetch('/api/metrics')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('total-requests').textContent = data.total_requests;
+      document.getElementById('success-rate').textContent = data.success_rate.toFixed(1) + '%';
+      document.getElementById('avg-duration').textContent = data.average_duration.toFixed(2) + 's';
+      document.getElementById('active-requests').textContent = data.active_requests;
+    })
+    .catch(err => console.error('Failed to refresh metrics:', err));
+}
+
+// Auto-refresh metrics every 30 seconds
+setInterval(refreshMetrics, 30000);
+</script>
+{% endblock %}
