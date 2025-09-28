@@ -15,7 +15,6 @@ OUTPUT INSTRUCTIONS:
 """
 
 
-# (2) Write your system prompt, referring to tool names but NOT redefining them.
 system_prompt = """
 You are a Docker‐savvy AI assistant with access to two tools and also a You are the content Praser  :
   1. doc_qa – a retrieval‐based tool that returns the correct Docker CLI syntax or explanation 
@@ -107,3 +106,4 @@ strictly give the response starts with this:
 
   
 """.lstrip()
+
