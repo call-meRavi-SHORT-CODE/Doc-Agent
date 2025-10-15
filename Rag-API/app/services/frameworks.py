@@ -40,11 +40,6 @@ def get_agent(framework_name: str, llm, rag_chain):
         # Pass your actual system_prompt into create_react_agent
         return create_react_agent(model=llm, tools=tools, prompt=system_prompt)
 
-    elif framework_name == "autogen":
-        # Placeholder for an AutoGen‐based agent
-        raise       ("AutoGen framework not implemented yet")
-
-
     elif framework_name == "dspy":
 
         
@@ -81,6 +76,13 @@ def get_agent(framework_name: str, llm, rag_chain):
         
         dspy_react = dspy.ReAct(signature=sig, tools=tools)
         return dspy_react
+
+    elif framework_name == "autogen":
+        # Placeholder for an AutoGen‐based agent
+        raise       ("AutoGen framework not implemented yet")
+
+
+    
     
     elif framework_name == "llamaindex":
 
@@ -117,4 +119,5 @@ def get_agent(framework_name: str, llm, rag_chain):
       
 
     else:
+
         raise ValueError(f"Unsupported framework: {framework_name}")
