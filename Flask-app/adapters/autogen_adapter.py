@@ -7,6 +7,18 @@ class AutoGenAdapter(FrameworkAdapter):
     
     def get_name(self) -> str:
         return "autogen"
+
+    def execute_query(self, agent: Any, query: str) -> Dict[str, Any]:
+        """Execute query using AutoGen agent (placeholder)"""
+        start_time = time.time()
+        duration = time.time() - start_time
+        
+        return {
+            'answer': "AutoGen framework is not yet implemented. Please use LangGraph, LlamaIndex, or DSPy.",
+            'duration': duration,
+            'tokens_used': 0,
+            'status': 'not_implemented'
+        
     
     def get_supported_models(self) -> List[str]:
         return [
@@ -21,16 +33,6 @@ class AutoGenAdapter(FrameworkAdapter):
             'model': config.get('model'),
             'vector_store': config.get('vector_store'),
             'config': config
-        }
-    
-    def execute_query(self, agent: Any, query: str) -> Dict[str, Any]:
-        """Execute query using AutoGen agent (placeholder)"""
-        start_time = time.time()
-        duration = time.time() - start_time
         
-        return {
-            'answer': "AutoGen framework is not yet implemented. Please use LangGraph, LlamaIndex, or DSPy.",
-            'duration': duration,
-            'tokens_used': 0,
-            'status': 'not_implemented'
-        }
+    
+    
