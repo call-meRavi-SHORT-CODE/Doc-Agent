@@ -30,17 +30,17 @@ load_dotenv()
 os.environ.setdefault("USER_AGENT", "Doc_search_Agent")
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-
-
-OPENAI_API_KEY = OPENAI_API_KEY
-embeddings = embeddings
-
-
 if os.path.exists(FAISS_INDEX_DIR):
     logging.info("Loading existing FAISS index…")
     db = FAISS.load_local(FAISS_INDEX_DIR, embeddings, allow_dangerous_deserialization=True)
 else:
     db = build_faiss_index()
+
+OPENAI_API_KEY = OPENAI_API_KEY
+embeddings = embeddings
+
+
+
 
 
 
@@ -114,5 +114,6 @@ def run_agent(question: str):
 if __name__ == "__main__":
     run_agent("show all the running docker containers")
   
+
 
 #Create new container named my-app1 using the nginx:latest image in detached mode
