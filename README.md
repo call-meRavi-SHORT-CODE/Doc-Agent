@@ -108,7 +108,7 @@ This README provides instructions for setup, local development, Dockerization, c
 
 ## Troubleshooting
 
-* **Local desktop engine not started**: Ensure your local LLM or embedding engine (e.g., a local server for embeddings) is running and reachable at the configured endpoint.
+* **Local desktop engine not started**: Ensure your local LLM or embedding engine (e.g. a local server for embeddings) is running and reachable at the configured endpoint.
 * **Port conflicts**: Verify ports 8000 and 5000 are free or update configuration.
 * **Environment variables**: Confirm `.env` values are loaded (e.g., using `python-dotenv` or your framework’s loader)
 
